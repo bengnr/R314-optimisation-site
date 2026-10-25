@@ -155,38 +155,49 @@
   }
 
   /* Aligne la hauteur des cartes et anime leur arrivée dans le viewport. */
-  function revealCards() {
-    var cards = UIKit.qsa('.card');
+ function revealCards() {
+  var cards = UIKit.qsa('.card');
+  var i, rect;
 
-    for (var i = 0; i < cards.length; i++) {
-      var rect = cards[i].getBoundingClientRect();
+  // 1) Toutes les lectures d'abord
+  var rects = [];
+  for (i = 0; i < cards.length; i++) {
+    rects.push(cards[i].getBoundingClientRect());
+  }
 
-      // Hauteur de la plus grande carte, pour garder une grille régulière.
-      var tallest = 0;
-      var all = UIKit.qsa('.card');
-      for (var j = 0; j < all.length; j++) {
-        if (all[j].offsetHeight > tallest) {
-          tallest = all[j].offsetHeight;
-        }
-      }
-      cards[i].style.minHeight = tallest + 'px';
-
-      if (rect.top < window.innerHeight - 40) {
-        UIKit.cls(cards[i], 'visible', true);
-        cards[i].style.transform = 'translateY(0px)';
-      } else {
-        cards[i].style.transform = 'translateY(24px)';
-      }
-    }
-
-    // Les cases du calendrier apparaissent progressivement à l'approche.
-    var jours = UIKit.qsa('.cal-day');
-    for (var k = 0; k < jours.length; k++) {
-      var box = jours[k].getBoundingClientRect();
-      var d = Math.abs(box.top - window.innerHeight / 2);
-      jours[k].style.opacity = Math.max(0.15, 1 - d / window.innerHeight);
+  // Hauteur max calculée UNE seule fois (sur la hauteur naturelle des cartes)
+  for (i = 0; i < cards.length; i++) {
+    cards[i].style.minHeight = '';
+  }
+  var tallest = 0;
+  for (i = 0; i < cards.length; i++) {
+    if (cards[i].offsetHeight > tallest) {
+      tallest = cards[i].offsetHeight;
     }
   }
+
+  var jours = UIKit.qsa('.cal-day');
+  var boxes = [];
+  for (i = 0; i < jours.length; i++) {
+    boxes.push(jours[i].getBoundingClientRect());
+  }
+
+  // 2) Toutes les écritures ensuite
+  for (i = 0; i < cards.length; i++) {
+    cards[i].style.minHeight = tallest + 'px';
+    if (rects[i].top < window.innerHeight - 40) {
+      UIKit.cls(cards[i], 'visible', true);
+      cards[i].style.transform = 'translateY(0px)';
+    } else {
+      cards[i].style.transform = 'translateY(24px)';
+    }
+  }
+
+  for (i = 0; i < jours.length; i++) {
+    var d = Math.abs(boxes[i].top - window.innerHeight / 2);
+    jours[i].style.opacity = Math.max(0.15, 1 - d / window.innerHeight);
+  }
+}
 
   /* Affiche les images une fois chargées. */
   function watchImages() {
