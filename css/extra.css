@@ -1,8 +1,0 @@
-/* Ombre en trois couches du bandeau. Les mêmes déclarations sur .card,
-   .feature et .cta étaient toujours écrasées par styles.css (chargé après). */
-.hero{
-  box-shadow:
-    0 2px 4px rgba(0,0,0,.14),
-    0 8px 24px rgba(0,0,0,.22),
-    0 24px 60px rgba(0,0,0,.18);
-}
