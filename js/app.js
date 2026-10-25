@@ -177,50 +177,49 @@
     }
   }
 
-  /* Anime l'arrivée des cartes dans le viewport (IntersectionObserver). */
-  function observeCards() {
-    var cards = UIKit.qsa('.card');
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          UIKit.cls(entry.target, 'visible', true);
-          entry.target.style.transform = 'translateY(0px)';
-          io.unobserve(entry.target);
-        }
-      });
-    }, { rootMargin: '0px 0px -40px 0px' });
+  /* Effets liés au défilement, recalculés au plus une fois par image
+     (requestAnimationFrame) : toutes les lectures de position d'abord,
+     toutes les écritures ensuite, donc aucun reflow forcé.
 
-    cards.forEach(function (card) {
-      card.style.transform = 'translateY(24px)';
-      io.observe(card);
-    });
-  }
+     Cartes : comme à l'origine, une carte dont le haut est au-dessus du
+     bas de l'écran (moins 40 px) est révélée ; sinon elle redescend de
+     24 px, pour rejouer son arrivée au prochain passage. Le style n'est
+     réécrit que si l'état change.
 
-  /* Estompe les cases du calendrier selon leur distance au centre de
-     l'écran : opacité = max(0.15, 1 - distance / hauteur de fenêtre).
-     Les 7 cases d'une même ligne partagent le même haut : une seule
-     lecture (le haut de la grille) suffit, puis 7 écritures de variables
-     CSS (--o0..--o6, lues par .cal-day:nth-child(7n+k)), au plus une
-     fois par image. */
+     Calendrier : opacité = max(0.15, 1 - distance au centre / hauteur
+     de fenêtre). Les 7 cases d'une même ligne partagent le même haut :
+     on lit le haut de la grille, puis on écrit 7 variables CSS (--o0..--o6,
+     lues par .cal-day:nth-child(7n+k)). */
   var LIGNE = 11 + 3; /* grid-template-rows: 11px, gap: 3px */
-  function shadeCalendar() {
-    var host = UIKit.qs('#calendrier');
-    if (!host) return;
-    var top = host.getBoundingClientRect().top;
+  var cards = [], cardState = [], calendrier = null;
+
+  function updateOnScroll() {
     var h = window.innerHeight;
-    for (var r = 0; r < 7; r++) {
-      var d = Math.abs(top + r * LIGNE - h / 2);
-      host.style.setProperty('--o' + r, Math.max(0.15, 1 - d / h));
+    var tops = cards.map(function (c) { return c.getBoundingClientRect().top; });
+    var calTop = calendrier ? calendrier.getBoundingClientRect().top : 0;
+
+    for (var i = 0; i < cards.length; i++) {
+      var visible = tops[i] < h - 40;
+      if (cardState[i] === visible) continue;
+      cardState[i] = visible;
+      if (visible) UIKit.cls(cards[i], 'visible', true);
+      cards[i].style.transform = visible ? 'translateY(0px)' : 'translateY(24px)';
+    }
+    if (calendrier) {
+      for (var r = 0; r < 7; r++) {
+        var d = Math.abs(calTop + r * LIGNE - h / 2);
+        calendrier.style.setProperty('--o' + r, Math.max(0.15, 1 - d / h));
+      }
     }
   }
 
-  var shadePending = false;
-  function requestShade() {
-    if (shadePending) return;
-    shadePending = true;
+  var updatePending = false;
+  function requestUpdate() {
+    if (updatePending) return;
+    updatePending = true;
     requestAnimationFrame(function () {
-      shadePending = false;
-      shadeCalendar();
+      updatePending = false;
+      updateOnScroll();
     });
   }
 
@@ -242,20 +241,21 @@
     buildActivityCalendar();
     watchImages();
     alignCards();
-    observeCards();
-    shadeCalendar();
+    cards = UIKit.qsa('.card');
+    calendrier = UIKit.qs('#calendrier');
+    updateOnScroll();
     var champ = UIKit.qs('#q');
     if (champ) champ.addEventListener('input', filterGallery);
   });
 
   window.addEventListener('load', alignCards);
-  window.addEventListener('load', requestShade);
-  window.addEventListener('scroll', requestShade, { passive: true });
+  window.addEventListener('load', requestUpdate);
+  window.addEventListener('scroll', requestUpdate, { passive: true });
 
   var resizeTimer;
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(alignCards, 150);
-    requestShade();
+    requestUpdate();
   });
 })();
