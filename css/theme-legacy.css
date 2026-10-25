@@ -1,6 +1,5 @@
 /* theme-legacy.css — reliquats de l'ancienne charte graphique.
    Conservé pour compatibilité avec les pages qui n'ont pas été reprises. */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 /* Texture d'arrière-plan du bandeau principal. */
 .hero{position:relative;overflow:hidden}
