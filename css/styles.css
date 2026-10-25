@@ -12,8 +12,14 @@ a{color:var(--fg);text-decoration:none;opacity:.9}a:hover{opacity:1}
 .hero-inner{display:grid;grid-template-columns:1fr;gap:28px}
 .hero h1{font-size:clamp(28px,4vw,56px);line-height:1.05;margin:0 0 10px}
 .hero p{font-size:clamp(16px,1.8vw,22px);color:var(--muted)}
-.cta{display:inline-block;margin-top:18px;background:var(--primary);padding:14px 20px;border-radius:12px;box-shadow:0 20px 50px rgba(124,92,255,.35);transition:transform .2s ease, box-shadow .2s ease}
-.cta:hover{transform:translateY(-2px);box-shadow:0 28px 60px rgba(124,92,255,.45)}
+.cta{position:relative;display:inline-block;margin-top:18px;background:var(--primary);padding:14px 20px;border-radius:12px;transition:transform .2s ease}
+.cta:hover{transform:translateY(-2px)}
+/* Ombres de repos et de survol portées par deux pseudo-éléments : le survol ne fait
+   varier que leur opacité (composition seule) au lieu d'animer box-shadow (repeinture). */
+.cta::before,.cta::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;transition:opacity .2s ease}
+.cta::before{box-shadow:0 20px 50px rgba(124,92,255,.35)}
+.cta::after{box-shadow:0 28px 60px rgba(124,92,255,.45);opacity:0}
+.cta:hover::before{opacity:0}.cta:hover::after{opacity:1}
 .section{padding:60px 0}.section h2{margin:0 0 20px}
 .gallery .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px var(--shadow)}
