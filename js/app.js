@@ -188,12 +188,19 @@
 
      Calendrier : opacité = max(0.15, 1 - distance au centre / hauteur
      de fenêtre). Les 7 cases d'une même ligne partagent le même haut :
-     on lit le haut de la grille, puis on écrit 7 variables CSS (--o0..--o6,
-     lues par .cal-day:nth-child(7n+k)). */
+     on lit le haut de la grille et on calcule 7 valeurs, une par ligne.
+     Le lissage d'origine (transition opacity .25s linear sur chacune des
+     371 cases, relancée à chaque image de défilement : 371 transitions
+     recréées par image) est reproduit en JS : à chaque nouvelle cible,
+     interpolation linéaire en 250 ms depuis la valeur courante, et une
+     case n'est réécrite que si sa valeur change. */
   var LIGNE = 11 + 3; /* grid-template-rows: 11px, gap: 3px */
-  var cards = [], cardState = [], calendrier = null;
+  var DUREE = 250;    /* ms, ex-transition:opacity .25s linear */
+  var cards = [], cardState = [], calendrier = null, jours = [], lignes = [];
+  for (var k = 0; k < 7; k++) lignes.push({ de: 1, vers: 1, t0: 0, val: 1 });
 
-  function updateOnScroll() {
+  function updateOnScroll(now) {
+    now = now || performance.now();
     var h = window.innerHeight;
     var tops = cards.map(function (c) { return c.getBoundingClientRect().top; });
     var calTop = calendrier ? calendrier.getBoundingClientRect().top : 0;
@@ -206,10 +213,19 @@
       cards[i].style.transform = visible ? 'translateY(0px)' : 'translateY(24px)';
     }
     if (calendrier) {
+      var anime = false;
       for (var r = 0; r < 7; r++) {
-        var d = Math.abs(calTop + r * LIGNE - h / 2);
-        calendrier.style.setProperty('--o' + r, Math.max(0.15, 1 - d / h));
+        var l = lignes[r];
+        var cible = Math.max(0.15, 1 - Math.abs(calTop + r * LIGNE - h / 2) / h);
+        if (cible !== l.vers) { l.de = l.val; l.vers = cible; l.t0 = now; }
+        var p = Math.min(1, (now - l.t0) / DUREE);
+        var val = l.de + (l.vers - l.de) * p;
+        if (p < 1) anime = true;
+        if (val === l.val) continue; /* loin de l'écran : tout reste à 0.15 */
+        l.val = val;
+        for (var j = r; j < jours.length; j += 7) jours[j].style.opacity = val;
       }
+      if (anime) requestUpdate();
     }
   }
 
@@ -217,9 +233,9 @@
   function requestUpdate() {
     if (updatePending) return;
     updatePending = true;
-    requestAnimationFrame(function () {
+    requestAnimationFrame(function (now) {
       updatePending = false;
-      updateOnScroll();
+      updateOnScroll(now);
     });
   }
 
@@ -243,6 +259,7 @@
     alignCards();
     cards = UIKit.qsa('.card');
     calendrier = UIKit.qs('#calendrier');
+    jours = UIKit.qsa('.cal-day');
     updateOnScroll();
     var champ = UIKit.qs('#q');
     if (champ) champ.addEventListener('input', filterGallery);
