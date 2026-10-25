@@ -1,0 +1,19 @@
+== https://nico3807.github.io/R314-optimisation-site/
+css2?family=Playfair+Display:wght@400;500;600;700&display=swap    6556 octets,      0 utilisés, 100.0 % inutilisé
+(inline)              1164 octets,    708 utilisés, 39.2 % inutilisé
+theme-legacy.css      1249 octets,    245 utilisés, 80.4 % inutilisé
+extra.css            28831 octets,    141 utilisés, 99.5 % inutilisé
+css2?family=Poppins:wght@300;400;600&display=block    3639 octets,      0 utilisés, 100.0 % inutilisé
+styles.css           92045 octets,   3658 utilisés, 96.0 % inutilisé
+TOTAL               133484 octets,   4752 utilisés, 96.4 % inutilisé
+== http://127.0.0.1:8000/
+(inline)              1164 octets,    235 utilisés, 79.8 % inutilisé
+styles.css           93008 octets,   3973 utilisés, 95.7 % inutilisé
+extra.css            29603 octets,    146 utilisés, 99.5 % inutilisé
+theme-legacy.css      1168 octets,    252 utilisés, 78.4 % inutilisé
+TOTAL               124943 octets,   4606 utilisés, 96.3 % inutilisé
+== http://127.0.0.1:8000/img2.html
+styles.css           93008 octets,    899 utilisés, 99.0 % inutilisé
+extra.css            29603 octets,      0 utilisés, 100.0 % inutilisé
+theme-legacy.css      1168 octets,      0 utilisés, 100.0 % inutilisé
+TOTAL               123779 octets,    899 utilisés, 99.3 % inutilisé
