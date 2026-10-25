@@ -196,15 +196,32 @@
     });
   }
 
-  /* Estompe les cases du calendrier selon leur distance au centre. */
-  function observeCalendar() {
-    var jours = UIKit.qsa('.cal-day');
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        entry.target.style.opacity = entry.isIntersecting ? 1 : 0.4;
-      });
+  /* Estompe les cases du calendrier selon leur distance au centre de
+     l'écran : opacité = max(0.15, 1 - distance / hauteur de fenêtre).
+     Les 7 cases d'une même ligne partagent le même haut : une seule
+     lecture (le haut de la grille) suffit, puis 7 écritures de variables
+     CSS (--o0..--o6, lues par .cal-day:nth-child(7n+k)), au plus une
+     fois par image. */
+  var LIGNE = 11 + 3; /* grid-template-rows: 11px, gap: 3px */
+  function shadeCalendar() {
+    var host = UIKit.qs('#calendrier');
+    if (!host) return;
+    var top = host.getBoundingClientRect().top;
+    var h = window.innerHeight;
+    for (var r = 0; r < 7; r++) {
+      var d = Math.abs(top + r * LIGNE - h / 2);
+      host.style.setProperty('--o' + r, Math.max(0.15, 1 - d / h));
+    }
+  }
+
+  var shadePending = false;
+  function requestShade() {
+    if (shadePending) return;
+    shadePending = true;
+    requestAnimationFrame(function () {
+      shadePending = false;
+      shadeCalendar();
     });
-    jours.forEach(function (j) { io.observe(j); });
   }
 
   /* Affiche les images une fois chargées. */
@@ -226,16 +243,19 @@
     watchImages();
     alignCards();
     observeCards();
-    observeCalendar();
+    shadeCalendar();
     var champ = UIKit.qs('#q');
     if (champ) champ.addEventListener('input', filterGallery);
   });
 
   window.addEventListener('load', alignCards);
+  window.addEventListener('load', requestShade);
+  window.addEventListener('scroll', requestShade, { passive: true });
 
   var resizeTimer;
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(alignCards, 150);
+    requestShade();
   });
 })();
