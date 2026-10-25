@@ -1,5 +1,3 @@
 .vscode/
-audit/tmp-*
 node_modules/
 .DS_Store
-img/les nouvelles images*/
