@@ -155,49 +155,54 @@
   }
 
   /* Aligne la hauteur des cartes et anime leur arrivée dans le viewport. */
- function revealCards() {
-  var cards = UIKit.qsa('.card');
-  var i, rect;
+  /* Aligne la hauteur des cartes (uniquement au chargement et au resize). */
+  function alignCards() {
+    var cards = UIKit.qsa('.card');
+    var i;
 
-  // 1) Toutes les lectures d'abord
-  var rects = [];
-  for (i = 0; i < cards.length; i++) {
-    rects.push(cards[i].getBoundingClientRect());
-  }
-
-  // Hauteur max calculée UNE seule fois (sur la hauteur naturelle des cartes)
-  for (i = 0; i < cards.length; i++) {
-    cards[i].style.minHeight = '';
-  }
-  var tallest = 0;
-  for (i = 0; i < cards.length; i++) {
-    if (cards[i].offsetHeight > tallest) {
-      tallest = cards[i].offsetHeight;
+    for (i = 0; i < cards.length; i++) {
+      cards[i].style.minHeight = '';
+    }
+    var tallest = 0;
+    for (i = 0; i < cards.length; i++) {
+      if (cards[i].offsetHeight > tallest) {
+        tallest = cards[i].offsetHeight;
+      }
+    }
+    for (i = 0; i < cards.length; i++) {
+      cards[i].style.minHeight = tallest + 'px';
     }
   }
 
-  var jours = UIKit.qsa('.cal-day');
-  var boxes = [];
-  for (i = 0; i < jours.length; i++) {
-    boxes.push(jours[i].getBoundingClientRect());
+  /* Anime l'arrivée des cartes dans le viewport (IntersectionObserver). */
+  function observeCards() {
+    var cards = UIKit.qsa('.card');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          UIKit.cls(entry.target, 'visible', true);
+          entry.target.style.transform = 'translateY(0px)';
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px' });
+
+    cards.forEach(function (card) {
+      card.style.transform = 'translateY(24px)';
+      io.observe(card);
+    });
   }
 
-  // 2) Toutes les écritures ensuite
-  for (i = 0; i < cards.length; i++) {
-    cards[i].style.minHeight = tallest + 'px';
-    if (rects[i].top < window.innerHeight - 40) {
-      UIKit.cls(cards[i], 'visible', true);
-      cards[i].style.transform = 'translateY(0px)';
-    } else {
-      cards[i].style.transform = 'translateY(24px)';
-    }
+  /* Estompe les cases du calendrier selon leur distance au centre. */
+  function observeCalendar() {
+    var jours = UIKit.qsa('.cal-day');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        entry.target.style.opacity = entry.isIntersecting ? 1 : 0.4;
+      });
+    });
+    jours.forEach(function (j) { io.observe(j); });
   }
-
-  for (i = 0; i < jours.length; i++) {
-    var d = Math.abs(boxes[i].top - window.innerHeight / 2);
-    jours[i].style.opacity = Math.max(0.15, 1 - d / window.innerHeight);
-  }
-}
 
   /* Affiche les images une fois chargées. */
   function watchImages() {
@@ -216,12 +221,18 @@
     buildKeywordIndex();
     buildActivityCalendar();
     watchImages();
-    revealCards();
+    alignCards();
+    observeCards();
+    observeCalendar();
     var champ = UIKit.qs('#q');
     if (champ) champ.addEventListener('input', filterGallery);
   });
 
-  window.addEventListener('scroll', revealCards);
-  window.addEventListener('resize', revealCards);
-  window.addEventListener('load', revealCards);
+  window.addEventListener('load', alignCards);
+
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(alignCards, 150);
+  });
 })();
